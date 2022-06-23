@@ -3,10 +3,10 @@ from django.db import models
 
 
 class RecomendationReview(models.TextChoices):
-    MUST_WATCH = ("MW", "Must Watch")
-    SHOULD_WATCH = ("SW", "Should Watch")
-    AVOID_WATCH = ("AW", "Avoid Watch")
-    NO_OPINION = ("NO", "No Opinion")
+    MUST_WATCH = "Must Watch"
+    SHOULD_WATCH = "Should Watch"
+    AVOID_WATCH = "Avoid Watch"
+    NO_OPINION = "No Opinion"
 
 
 # Create your models here.

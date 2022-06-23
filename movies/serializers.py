@@ -13,23 +13,25 @@ class MovieSerializer(serializers.Serializer):
     classification = serializers.IntegerField()
     synopsis = serializers.CharField(style={"base_template": "textarea.html"})
 
-    genres = GenreSerializer(many=True)
+    genres = GenreSerializer(many=True, required=False)
 
     def create(self, validated_data):
         if "genres" in validated_data.keys():
             genres = []
 
             for data in validated_data["genres"]:
-                try:
-                    genres.append(Genre.objects.get(name=data["name"].lower()))
-                except:
-                    genres.append(Genre.objects.create(name=data["name"].lower()))
+                genre, _ = Genre.objects.get_or_create(name=data["name"].lower())
+                genres.append(genre)
 
-        del validated_data["genres"]
+            del validated_data["genres"]
+
+            movie = Movie.objects.create(**validated_data)
+
+            movie.genres.set(genres)
+
+            return movie
 
         movie = Movie.objects.create(**validated_data)
-
-        movie.genres.set(genres)
 
         return movie
 
@@ -46,10 +48,8 @@ class MovieSerializer(serializers.Serializer):
             genres = []
 
             for data in validated_data["genres"]:
-                try:
-                    genres.append(Genre.objects.get(name=data["name"].lower()))
-                except:
-                    genres.append(Genre.objects.create(name=data["name"].lower()))
+                genre, _ = Genre.objects.get_or_create(name=data["name"].lower())
+                genres.append(genre)
 
             instance.genres.set(genres)
 
