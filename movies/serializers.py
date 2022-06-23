@@ -32,3 +32,26 @@ class MovieSerializer(serializers.Serializer):
         movie.genres.set(genres)
 
         return movie
+
+    def update(self, instance, validated_data):
+        instance.title = validated_data.get("title", instance.title)
+        instance.duration = validated_data.get("duration", instance.duration)
+        instance.premiere = validated_data.get("premiere", instance.premiere)
+        instance.classification = validated_data.get(
+            "classification", instance.classification
+        )
+        instance.synopsis = validated_data.get("synopsis", instance.synopsis)
+
+        if "genres" in validated_data.keys():
+            genres = []
+
+            for data in validated_data["genres"]:
+                try:
+                    genres.append(Genre.objects.get(name=data["name"].lower()))
+                except:
+                    genres.append(Genre.objects.create(name=data["name"].lower()))
+
+            instance.genres.set(genres)
+
+        instance.save()
+        return instance

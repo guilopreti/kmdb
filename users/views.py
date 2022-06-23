@@ -1,8 +1,10 @@
 from django.contrib.auth import authenticate
+from django.shortcuts import get_list_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView, Response, status
 
 from .models import User
+from .permissions import UserPermission
 from .serializers import LoginSerializer, UserSerializer
 
 
@@ -37,3 +39,30 @@ class LoginView(APIView):
         return Response(
             {"detail": "Invalid email or password"}, status=status.HTTP_401_UNAUTHORIZED
         )
+
+
+class UserView(APIView):
+    permission_classes = [UserPermission]
+
+    def get(self, request):
+        users = get_list_or_404(User)
+
+        serializer = UserSerializer(users, many=True)
+
+        return Response(serializer.data)
+
+
+class UserParamsView(APIView):
+    permission_classes = [UserPermission]
+
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+
+            serializer = UserSerializer(user)
+
+            return Response(serializer.data)
+        except:
+            return Response(
+                {"message": "User not found."}, status=status.HTTP_404_NOT_FOUND
+            )
