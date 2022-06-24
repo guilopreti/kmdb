@@ -1,7 +1,8 @@
-import ipdb
 from django.shortcuts import get_list_or_404
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView, Response, status
+from reviews.models import Review
 from reviews.serializers import ReviewSerializer
 
 from .models import Movie
@@ -10,7 +11,7 @@ from .serializers import MovieSerializer
 
 
 # Create your views here.
-class MovieView(APIView):
+class MovieView(APIView, PageNumberPagination):
     permission_classes = [MoviePermission]
 
     def post(self, request):
@@ -25,9 +26,11 @@ class MovieView(APIView):
     def get(self, request):
         movies = get_list_or_404(Movie)
 
-        serializer = MovieSerializer(movies, many=True)
+        result_page = self.paginate_queryset(movies, request, view=self)
 
-        return Response(serializer.data)
+        serializer = MovieSerializer(result_page, many=True)
+
+        return self.get_paginated_response(serializer.data)
 
 
 class MovieParamsView(APIView):
@@ -75,7 +78,7 @@ class MovieParamsView(APIView):
             )
 
 
-class MovieReviewView(APIView):
+class MovieReviewView(APIView, PageNumberPagination):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def post(self, request, movie_id):
@@ -102,11 +105,17 @@ class MovieReviewView(APIView):
         try:
             movie = Movie.objects.get(id=movie_id)
 
-            reviews = movie.reviews
+            serializerReviews = ReviewSerializer(movie.reviews, many=True)
 
-            serializer = ReviewSerializer(reviews, many=True)
+            reviews = [
+                Review.objects.get(id=value["id"]) for value in serializerReviews.data
+            ]
 
-            return Response(serializer.data)
+            result_page = self.paginate_queryset(reviews, request, view=self)
+
+            serializer = ReviewSerializer(result_page, many=True)
+
+            return self.get_paginated_response(serializer.data)
         except:
             return Response(
                 {"message": "Movie not found."}, status=status.HTTP_404_NOT_FOUND

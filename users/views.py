@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from django.shortcuts import get_list_or_404
 from rest_framework.authtoken.models import Token
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView, Response, status
 
 from .models import User
@@ -41,15 +42,17 @@ class LoginView(APIView):
         )
 
 
-class UserView(APIView):
+class UserView(APIView, PageNumberPagination):
     permission_classes = [UserPermission]
 
     def get(self, request):
         users = get_list_or_404(User)
 
-        serializer = UserSerializer(users, many=True)
+        result_page = self.paginate_queryset(users, request, view=self)
 
-        return Response(serializer.data)
+        serializer = UserSerializer(result_page, many=True)
+
+        return self.get_paginated_response(serializer.data)
 
 
 class UserParamsView(APIView):

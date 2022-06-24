@@ -1,5 +1,5 @@
-import ipdb
 from django.shortcuts import get_list_or_404
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView, Response, status
 
 from .models import Review
@@ -8,13 +8,15 @@ from .serializers import ReviewSerializer
 
 
 # Create your views here.
-class ReviewView(APIView):
+class ReviewView(APIView, PageNumberPagination):
     def get(self, request):
         reviews = get_list_or_404(Review)
 
-        serializer = ReviewSerializer(reviews, many=True)
+        result_page = self.paginate_queryset(reviews, request, view=self)
 
-        return Response(serializer.data)
+        serializer = ReviewSerializer(result_page, many=True)
+
+        return self.get_paginated_response(serializer.data)
 
 
 class ReviewParamsView(APIView):
